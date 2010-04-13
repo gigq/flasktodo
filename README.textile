@@ -4,8 +4,7 @@ You can try it out for yourself at "flasktodo.appspot.com":http://flasktodo.apps
 
 application.py
 
-@
-from flask import Flask
+bc.. from flask import Flask
 app = Flask(__name__)
 
 from google.appengine.ext import db
@@ -65,12 +64,11 @@ app.secret_key = 'the secret key'
 
 if __name__ == '__main__':
     app.run()
-@
 
-list.html
 
-@
-<!doctype html>
+p. list.html
+
+bc.. <!doctype html>
 Welcome, {{ user.nickname() }} <a href="{{ logout_url }}">sign out</a>
 
 <ul>
@@ -87,4 +85,3 @@ Welcome, {{ user.nickname() }} <a href="{{ logout_url }}">sign out</a>
     <p><input type=text name=name>
     <input type=submit value=Add>
 </form>
-@
