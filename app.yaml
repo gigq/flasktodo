@@ -1,0 +1,9 @@
+application: flasktodo
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /.*
+  script: app.cgi
+  login: required

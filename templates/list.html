@@ -1,0 +1,17 @@
+<!doctype html>
+Welcome, {{ user.nickname() }} <a href="{{ logout_url }}">sign out</a>
+
+<ul>
+{% for task in tasks %}
+  <li><a href="/done/{{ task.key().id() }}">X</a> {% if task.done %}<strike>{% endif %}{{ task.name }}{% if task.done %}</strike>{% endif %} <a href="/delete/{{ task.key().id() }}">delete</a></li>
+{% endfor %}
+</ul>
+
+{% for flash in flashes %}
+  <p>{{ flash }}</p>
+{% endfor %}
+
+<form action="" method="post">
+    <p><input type=text name=name>
+    <input type=submit value=Add>
+</form>
