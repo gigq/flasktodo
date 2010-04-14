@@ -9,22 +9,17 @@
     :copyright: (c) 2010 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
-# Need to import with_statment from future in app engine
 from __future__ import with_statement
 
 import os
 import sys
-try:
-    import pkg_resources
-except ImportError:
-    # App engine doesn't support pkg_resources
-    pass
 
 from threading import local
 from contextlib import contextmanager
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, PackageLoader, FileSystemLoader
 from werkzeug import Request as RequestBase, Response as ResponseBase, \
-     LocalStack, LocalProxy, create_environ, cached_property
+     LocalStack, LocalProxy, create_environ, cached_property, \
+     SharedDataMiddleware
 from werkzeug.routing import Map, Rule
 from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.contrib.securecookie import SecureCookie
@@ -33,6 +28,16 @@ from werkzeug.contrib.securecookie import SecureCookie
 # in the module but are exported as public interface.
 from werkzeug import abort, redirect
 from jinja2 import Markup, escape
+
+# use pkg_resource if that works, otherwise fall back to cwd.  The
+# current working directory is generally not reliable with the notable
+# exception of google appengine.
+try:
+    import pkg_resources
+    pkg_resources.resource_stream
+except (ImportError, AttributeError):
+    pkg_resources = None
+
 
 class Request(RequestBase):
     """The request object used by default in flask.  Remembers the
@@ -208,6 +213,10 @@ class Flask(object):
         #: it was set by the constructor.
         self.package_name = package_name
 
+        #: where is the app root located?
+        self.root_path = os.path.abspath(os.path.dirname(
+            sys.modules[self.package_name].__file__))
+
         #: a dictionary of all view functions registered.  The keys will
         #: be function names which are also used to generate URLs and
         #: the values are the function objects themselves.
@@ -248,6 +257,13 @@ class Flask(object):
         if self.static_path is not None:
             self.url_map.add(Rule(self.static_path + '/<filename>',
                                   build_only=True, endpoint='static'))
+            if pkg_resources is not None:
+                target = (self.package_name, 'static')
+            else:
+                target = os.path.join(self.root_path, 'static')
+            self.wsgi_app = SharedDataMiddleware(self.wsgi_app, {
+                self.static_path: target
+            })
 
         #: the Jinja2 environment.  It is created from the
         #: :attr:`jinja_options` and the loader that is returned
@@ -265,8 +281,9 @@ class Flask(object):
         `templates` folder.  To add other loaders it's possible to
         override this method.
         """
-        #return PackageLoader(self.package_name)
-        return FileSystemLoader('templates')
+        if pkg_resources is None:
+            return FileSystemLoader(os.path.join(self.root_path, 'templates'))
+        return PackageLoader(self.package_name)
 
     def update_template_context(self, context):
         """Update the template context with some commonly used variables.
@@ -294,10 +311,6 @@ class Flask(object):
         from werkzeug import run_simple
         if 'debug' in options:
             self.debug = options.pop('debug')
-        if self.static_path is not None:
-            options['static_files'] = {
-                self.static_path:   (self.package_name, 'static')
-            }
         options.setdefault('use_reloader', self.debug)
         options.setdefault('use_debugger', self.debug)
         return run_simple(host, port, self, **options)
@@ -331,6 +344,8 @@ class Flask(object):
         :param resource: the name of the resource.  To access resources within
                          subfolders use forward slashes as separator.
         """
+        if pkg_resources is None:
+            return open(os.path.join(self.root_path, resource), 'rb')
         return pkg_resources.resource_stream(self.package_name, resource)
 
     def open_session(self, request):
