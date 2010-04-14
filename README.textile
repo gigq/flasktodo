@@ -3,6 +3,8 @@
 You can try it out for yourself at "flasktodo.appspot.com":http://flasktodo.appspot.com.  To give you an idea of how simple coding in a micro framework can be I've included all the code below.
 
 
+p. application.py
+
 bc.. from flask import Flask
 app = Flask(__name__)
 
@@ -64,6 +66,8 @@ app.secret_key = 'the secret key'
 if __name__ == '__main__':
     app.run()
 
+
+p. list.html
 
 bc.. <!doctype html>
 Welcome, {{ user.nickname() }} <a href="{{ logout_url }}">sign out</a>
