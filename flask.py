@@ -35,7 +35,7 @@ from jinja2 import Markup, escape
 try:
     import pkg_resources
     pkg_resources.resource_stream
-except (ImportError, AttributeError):
+except (ImportError, AttributeError, IOError):
     pkg_resources = None
 
 

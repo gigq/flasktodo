@@ -5,5 +5,5 @@ api_version: 1
 
 handlers:
 - url: /.*
-  script: app.cgi
+  script: app.py
   login: required
